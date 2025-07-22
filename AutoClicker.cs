@@ -92,6 +92,7 @@ namespace AutoClicker
         private const int WM_KEYDOWN = 0x0100;
         private const int VK_F1 = 0x70;
         private const int VK_F2 = 0x71;
+        private const int VK_CONTROL = 0x11;
 
         private volatile bool isClicking = false;
         private volatile bool shouldExit = false;
@@ -268,8 +269,8 @@ namespace AutoClicker
             Console.WriteLine("  Q - 退出程序");
             Console.WriteLine();
             Console.WriteLine("全局热键 (如果注册成功):");
-            Console.WriteLine("  F1 - 开始点击");
-            Console.WriteLine("  F2 - 停止点击");
+            Console.WriteLine("  Ctrl+F1 - 开始点击");
+            Console.WriteLine("  Ctrl+F2 - 停止点击");
             Console.WriteLine();
 
             // 注册全局热键
@@ -308,7 +309,7 @@ namespace AutoClicker
 
         private void SetupGlobalHotkeys()
         {
-            Console.WriteLine("启动按键监听: F1=开始, F2=停止 (全局有效)");
+            Console.WriteLine("启动按键监听: Ctrl+F1=开始, Ctrl+F2=停止 (全局有效)");
             
             // 启动按键监听线程
             var keyListenerThread = new Thread(KeyListenerLoop)
@@ -321,30 +322,35 @@ namespace AutoClicker
 
         private void KeyListenerLoop()
         {
-            bool f1Pressed = false;
-            bool f2Pressed = false;
+            bool ctrlF1Pressed = false;
+            bool ctrlF2Pressed = false;
             
             while (!shouldExit)
             {
                 try
                 {
-                    // 检查F1按键状态
+                    // 检查Ctrl键是否按下
+                    bool ctrlPressed = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                    
+                    // 检查Ctrl+F1组合键
                     bool f1Current = (GetAsyncKeyState(VK_F1) & 0x8000) != 0;
-                    if (f1Current && !f1Pressed)
+                    bool ctrlF1Current = ctrlPressed && f1Current;
+                    if (ctrlF1Current && !ctrlF1Pressed)
                     {
-                        Console.WriteLine("\n[热键] F1 - 开始点击");
+                        Console.WriteLine("\n[热键] Ctrl+F1 - 开始点击");
                         StartClicking();
                     }
-                    f1Pressed = f1Current;
+                    ctrlF1Pressed = ctrlF1Current;
                     
-                    // 检查F2按键状态
+                    // 检查Ctrl+F2组合键
                     bool f2Current = (GetAsyncKeyState(VK_F2) & 0x8000) != 0;
-                    if (f2Current && !f2Pressed)
+                    bool ctrlF2Current = ctrlPressed && f2Current;
+                    if (ctrlF2Current && !ctrlF2Pressed)
                     {
-                        Console.WriteLine("\n[热键] F2 - 停止点击");
+                        Console.WriteLine("\n[热键] Ctrl+F2 - 停止点击");
                         StopClicking();
                     }
-                    f2Pressed = f2Current;
+                    ctrlF2Pressed = ctrlF2Current;
                     
                     // 短暂休眠，避免过度占用CPU
                     Thread.Sleep(50);
